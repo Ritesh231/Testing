@@ -20,33 +20,32 @@ const VerifyAccount = () => {
     setEmail(params.get('email'));
     setContact(params.get('contact'));
 
-    setStatus('idle'); // Stop showing spinner after extracting params
+    setStatus('idle');
   }, []);
 
-  const verifyAndRegister = async () => {
-    try {
-      setStatus('verifying');
-      const response = await axios.post('/api/user/register/verify', {
-        token,
-        name,
-        email,
-        contact,
-      });
+  const verifyAndRegister = async ({ token, name, email, contact }) => {
+  try {
+    setStatus('verifying');
+    const response = await axios.post('/api/user/register/verify', {
+      token,
+      name,
+      email,
+      contact,
+    });
 
-      if (response.data.success) {
-        setStatus('success');
-        setMessage(response.data.message || 'Verification successful!');
-        // setTimeout(() => navigate('/login'), 3000);
-      } else {
-        throw new Error('Verification failed');
-      }
-    } catch (error) {
-      setStatus('error');
-      setMessage(
-        error.response?.data?.message || 'Manual verification failed. Please try again.'
-      );
+    if (response.data.success) {
+      setStatus('success');
+      setMessage(response.data.message || 'Verification successful!');
+    } else {
+      throw new Error('Verification failed');
     }
-  };
+  } catch (error) {
+    setStatus('error');
+    setMessage(
+      error.response?.data?.message || 'Manual verification failed. Please try again.'
+    );
+  }
+};
 
   return (
     <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
@@ -75,10 +74,13 @@ const VerifyAccount = () => {
               <p>{message}</p>
             </Alert>
           )}
-
-          <button className="btn btn-primary mt-3" onClick={verifyAndRegister}>
-            Verify
-          </button>
+<button
+  className="btn btn-primary mt-3"
+  onClick={verifyAndRegister}
+  disabled={!token || !email || !name || !contact || status === 'verifying'}
+>
+  {status === 'verifying' ? 'Verifying...' : 'Verify'}
+</button>
         </Card.Body>
       </Card>
     </Container>
