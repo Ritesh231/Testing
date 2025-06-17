@@ -1,52 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Container, Card, Spinner, Alert } from 'react-bootstrap';
 
 const VerifyAccount = () => {
-  const { userId, token } = useParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState('verifying');
   const [message, setMessage] = useState('');
 
-  // Account verification via URL with userId and token
+  const [token, setToken] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [contact, setContact] = useState('');
+
   useEffect(() => {
-    const verifyAccount = async () => {
-      try {
-        const response = await axios.get(
-          `/api/users/verify-account/${userId}/${token}`
-        );
-
-        if (response.data.success) {
-          setStatus('success');
-          setMessage(response.data.message);
-          setTimeout(() => navigate('/login'), 3000);
-        }
-      } catch (error) {
-        setStatus('error');
-        setMessage(
-          error.response?.data?.message || 
-          'Account verification failed. Please try again.'
-        );
-      }
-    };
-
-    verifyAccount();
-  }, [userId, token, navigate]);
-
-  // 👇 Moved OUTSIDE of useEffect
-  const verifyAndRegister = async () => {
     const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    const name = params.get('name');
-    const email = params.get('email');
-    const contact = params.get('contact');
+    setToken(params.get('token'));
+    setName(params.get('name'));
+    setEmail(params.get('email'));
+    setContact(params.get('contact'));
 
+    setStatus('idle'); // Stop showing spinner after extracting params
+  }, []);
+
+  const verifyAndRegister = async () => {
     try {
-      await axios.post('/api/users/verify', { token, name, email, contact });
-      navigate('/login');
+      setStatus('verifying');
+      const response = await axios.post('/api/user/register/verify', {
+        token,
+        name,
+        email,
+        contact,
+      });
+
+      if (response.data.success) {
+        setStatus('success');
+        setMessage(response.data.message || 'Verification successful!');
+        // setTimeout(() => navigate('/login'), 3000);
+      } else {
+        throw new Error('Verification failed');
+      }
     } catch (error) {
-      alert('Manual verification failed. Please try again.');
+      setStatus('error');
+      setMessage(
+        error.response?.data?.message || 'Manual verification failed. Please try again.'
+      );
     }
   };
 
@@ -71,7 +69,13 @@ const VerifyAccount = () => {
             </Alert>
           )}
 
-          {/* Optional: button to manually trigger verify */}
+          {status === 'error' && (
+            <Alert variant="danger">
+              <Alert.Heading>Failed!</Alert.Heading>
+              <p>{message}</p>
+            </Alert>
+          )}
+
           <button className="btn btn-primary mt-3" onClick={verifyAndRegister}>
             Verify
           </button>
