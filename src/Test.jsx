@@ -33,7 +33,7 @@ const VerifyAccount = () => {
 
       console.log('Sending to backend:', { token, name, email, contact });
 
-      const response = await axios.post('/api/user/register/verify', {
+      const response = await axios.post('https://printing-backend-htev.onrender.com/api/user/register/verify', {
         token,
         name,
         email,
@@ -53,7 +53,7 @@ const VerifyAccount = () => {
       console.error('Verification error:', error);
       setStatus('error');
       setMessage(
-        error.response?.data?.message || 'Verification failed. Please try again.'
+        error.response?.data?.message || ''
       );
     }
   };
@@ -81,7 +81,6 @@ const VerifyAccount = () => {
 
           {status === 'error' && (
             <Alert variant="danger">
-              <Alert.Heading>Failed!</Alert.Heading>
               <p>{message}</p>
             </Alert>
           )}
