@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Container, Card, Spinner, Alert } from 'react-bootstrap';
+import { Container, Card, Spinner, Alert, Button } from 'react-bootstrap';
 
 const VerifyAccount = () => {
   const navigate = useNavigate();
-  const [status, setStatus] = useState('verifying');
+  const [status, setStatus] = useState('idle');
   const [message, setMessage] = useState('');
 
   const [token, setToken] = useState('');
@@ -15,37 +15,48 @@ const VerifyAccount = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setToken(params.get('token'));
-    setName(params.get('name'));
-    setEmail(params.get('email'));
-    setContact(params.get('contact'));
-
-    setStatus('idle');
+    setToken(params.get('token') || '');
+    setName(params.get('name') || '');
+    setEmail(params.get('email') || '');
+    setContact(params.get('contact') || '');
   }, []);
 
-  const verifyAndRegister = async ({ token, name, email, contact }) => {
-  try {
-    setStatus('verifying');
-    const response = await axios.post('/api/user/register/verify', {
-      token,
-      name,
-      email,
-      contact,
-    });
-
-    if (response.data.success) {
-      setStatus('success');
-      setMessage(response.data.message || 'Verification successful!');
-    } else {
-      throw new Error('Verification failed');
+  const verifyAndRegister = async () => {
+    if (!token || !name || !email || !contact) {
+      setStatus('error');
+      setMessage('Missing data for verification.');
+      return;
     }
-  } catch (error) {
-    setStatus('error');
-    setMessage(
-      error.response?.data?.message || 'Manual verification failed. Please try again.'
-    );
-  }
-};
+
+    try {
+      setStatus('verifying');
+
+      console.log('Sending to backend:', { token, name, email, contact });
+
+      const response = await axios.post('/api/user/register/verify', {
+        token,
+        name,
+        email,
+        contact
+      }, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.data.success) {
+        setStatus('success');
+        setMessage(response.data.message || 'Verification successful!');
+        setTimeout(() => navigate('/login'), 3000);
+      } else {
+        throw new Error('Verification failed');
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      setStatus('error');
+      setMessage(
+        error.response?.data?.message || 'Verification failed. Please try again.'
+      );
+    }
+  };
 
   return (
     <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
@@ -74,13 +85,12 @@ const VerifyAccount = () => {
               <p>{message}</p>
             </Alert>
           )}
-<button
-  className="btn btn-primary mt-3"
-  onClick={verifyAndRegister}
-  disabled={!token || !email || !name || !contact || status === 'verifying'}
->
-  {status === 'verifying' ? 'Verifying...' : 'Verify'}
-</button>
+
+          {status === 'idle' && (
+            <Button variant="primary" onClick={verifyAndRegister}>
+              Verify
+            </Button>
+          )}
         </Card.Body>
       </Card>
     </Container>
