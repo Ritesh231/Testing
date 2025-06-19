@@ -24,37 +24,28 @@ const VerifyAccount = () => {
   const verifyAndRegister = async () => {
     if (!token || !name || !email || !contact) {
       setStatus('error');
-      setMessage('Missing data for verification.');
+      setMessage('Not verified');
       return;
     }
 
     try {
       setStatus('verifying');
 
-      console.log('Sending to backend:', { token, name, email, contact });
-
-      const response = await axios.post('https://printing-backend-htev.onrender.com/api/user/register/verify', {
-        token,
-        name,
-        email,
-        contact
-      }, {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await axios.post(
+        'https://printing-backend-htev.onrender.com/api/user/register/verify',
+        { token, name, email, contact },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
 
       if (response.data.success) {
         setStatus('success');
-        setMessage(response.data.message || 'Verification successful!');
-        setTimeout(() => navigate('/login'), 3000);
+        setMessage('Verified successfully');
       } else {
         throw new Error('Verification failed');
       }
     } catch (error) {
-      console.error('Verification error:', error);
       setStatus('error');
-      setMessage(
-        error.response?.data?.message || ''
-      );
+      setMessage('Not verified');
     }
   };
 
@@ -73,9 +64,7 @@ const VerifyAccount = () => {
 
           {status === 'success' && (
             <Alert variant="success">
-              <Alert.Heading>Success!</Alert.Heading>
               <p>{message}</p>
-              <p>Redirecting to login page...</p>
             </Alert>
           )}
 
